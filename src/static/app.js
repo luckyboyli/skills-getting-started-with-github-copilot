@@ -12,20 +12,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+      // Clear previous options (keep the placeholder option)
+      while (activitySelect.options.length > 1) activitySelect.remove(1);
 
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
         activityCard.className = "activity-card";
 
-        const spotsLeft = details.max_participants - details.participants.length;
+        // Clamp spotsLeft to zero so negative values are not shown
+        const rawSpots = details.max_participants - details.participants.length;
+        const spotsLeft = rawSpots > 0 ? rawSpots : 0;
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-        `;
+        // Basic info
+        const title = document.createElement('h4');
+        title.textContent = name;
+        const desc = document.createElement('p');
+        desc.className = 'activity-desc';
+        desc.textContent = details.description;
+        const sched = document.createElement('p');
+        sched.innerHTML = `<strong>Schedule:</strong> ${details.schedule}`;
+
+        const avail = document.createElement('p');
+        avail.className = 'availability';
+        if (spotsLeft > 0) {
+          avail.innerHTML = `<strong>Availability:</strong> ${spotsLeft} spots left`;
+        } else {
+          avail.innerHTML = `<strong>Availability:</strong> <span class="full">Full</span>`;
+        }
+
+        // Participants list (use DOM methods to avoid HTML injection and formatting issues)
+        let participantsContainer;
+        if (details.participants && details.participants.length) {
+          const heading = document.createElement('p');
+          heading.className = 'participants-heading';
+          heading.innerHTML = `<strong>Participants (${details.participants.length}):</strong>`;
+
+          const ul = document.createElement('ul');
+          ul.className = 'participants-list';
+          details.participants.forEach(p => {
+            const li = document.createElement('li');
+            li.textContent = p;
+            ul.appendChild(li);
+          });
+
+          participantsContainer = document.createElement('div');
+          participantsContainer.appendChild(heading);
+          participantsContainer.appendChild(ul);
+        } else {
+          const no = document.createElement('p');
+          no.className = 'no-participants';
+          no.textContent = 'No participants yet';
+          participantsContainer = no;
+        }
+
+        activityCard.appendChild(title);
+        activityCard.appendChild(desc);
+        activityCard.appendChild(sched);
+        activityCard.appendChild(avail);
+        activityCard.appendChild(participantsContainer);
 
         activitiesList.appendChild(activityCard);
 
