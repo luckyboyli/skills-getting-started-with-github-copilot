@@ -52,7 +52,42 @@ document.addEventListener("DOMContentLoaded", () => {
           ul.className = 'participants-list';
           details.participants.forEach(p => {
             const li = document.createElement('li');
-            li.textContent = p;
+            li.className = 'participant-item';
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = p;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'participant-remove';
+            removeBtn.title = 'Remove participant';
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '✕';
+            removeBtn.addEventListener('click', async (e) => {
+              e.stopPropagation();
+              if (!confirm(`Remove ${p} from ${name}?`)) return;
+              try {
+                const resp = await fetch(`/activities/${encodeURIComponent(name)}/participants?email=${encodeURIComponent(p)}`, { method: 'DELETE' });
+                const resJson = await resp.json();
+                if (resp.ok) {
+                  messageDiv.textContent = resJson.message;
+                  messageDiv.className = 'success';
+                  // Refresh list
+                  fetchActivities();
+                } else {
+                  messageDiv.textContent = resJson.detail || 'Delete failed';
+                  messageDiv.className = 'error';
+                }
+              } catch (err) {
+                console.error('Error removing participant:', err);
+                messageDiv.textContent = 'Failed to remove participant';
+                messageDiv.className = 'error';
+              }
+              messageDiv.classList.remove('hidden');
+              setTimeout(() => messageDiv.classList.add('hidden'), 4000);
+            });
+
+            li.appendChild(nameSpan);
+            li.appendChild(removeBtn);
             ul.appendChild(li);
           });
 
